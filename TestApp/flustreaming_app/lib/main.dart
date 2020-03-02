@@ -9,6 +9,13 @@ import 'package:transparent_image/transparent_image.dart';
 import 'package:flutter_login/flutter_login.dart';
 import 'package:flutter_swiper/flutter_swiper.dart';
 import 'package:giffy_dialog/giffy_dialog.dart';
+import 'package:flappy_search_bar/flappy_search_bar.dart';
+
+// TODO Create databases for users
+// TODO Think about left menu
+// TODO Add asset logo
+// TODO auto-login
+// TODO Internal Player
 
 
 class Photo{
@@ -32,7 +39,9 @@ const users = const{
   'test@gmail.com': '1234',
   'test@email.it': 'test',
 };
+
 User user;
+
 class User{
   String name;
   IconData userIcon;
@@ -45,8 +54,6 @@ class User{
   }
 }
 
-
-
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -58,6 +65,7 @@ class MyApp extends StatelessWidget {
       routes: {
         "/login": (_) => new LoginPage(),
         "/homepage": (_) => new HomePage(),
+        "/search": (_) => new SearchPage(),
       },
     );
   }
@@ -69,6 +77,9 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage>{
+
+
+  List<Photo> photos;
 
   int _selectedIndex = 0;
   static const TextStyle optionStyle = TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
@@ -86,8 +97,11 @@ class HomePageState extends State<HomePage>{
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
-      print(index);
+      String route = '/homepage';
+      if(_selectedIndex == 1) Navigator.of(context).push(new SearchPageRoute(photos));
+      _selectedIndex = 0;
     });
+
   }
 
   @override
@@ -101,13 +115,11 @@ class HomePageState extends State<HomePage>{
             },
           ),
           centerTitle: true,
-          title: Text('Streaming App'),
+          title: Text('The Streaming App', style: TextStyle(fontSize: 28)),
           actions: <Widget>[IconButton(
             icon: Icon(Icons.account_circle),
             onPressed: () {
-              Navigator.push(
-                context, MaterialPageRoute(builder: (context) => UserPage()),
-              );
+              Navigator.of(context).push(new UserPageRoute());
             },
           )]
       ),
@@ -115,9 +127,13 @@ class HomePageState extends State<HomePage>{
           future: fetchPhotos(http.Client()),
           builder: (context, snapshot){
             if(snapshot.hasError) print(snapshot.error);
-            return snapshot.hasData
-                ? PhotosList(photos: snapshot.data)
-                : Center(child: CircularProgressIndicator());
+
+            var hasData = snapshot.hasData;
+
+            if(hasData) photos = snapshot.data;
+            return (hasData) ?
+            PhotosList(photos: snapshot.data) :
+            Center(child: CircularProgressIndicator());
           }
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -139,6 +155,11 @@ class HomePageState extends State<HomePage>{
 }
 
 
+class UserPageRoute extends CupertinoPageRoute {
+  UserPageRoute()
+      : super(builder: (BuildContext context) => new UserPage());
+}
+
 List<Photo> parsePhotos(String responseBody){
   final parsed = json.decode(responseBody).cast<Map<String, dynamic>>();
   return parsed.map<Photo>((json) => Photo.fromJson(json)).toList();
@@ -149,7 +170,6 @@ Future<List<Photo>> fetchPhotos(http.Client client) async {
 
   return compute(parsePhotos, response.body);
 }
-
 
 class PhotosList extends StatelessWidget {
   final List<Photo> photos;
@@ -166,8 +186,8 @@ class PhotosList extends StatelessWidget {
             Container(
                 padding: EdgeInsets.all(10),
                 alignment: Alignment.center,
-                child: FadeInImage.memoryNetwork(
-                    placeholder: kTransparentImage,
+                child: FadeInImage.assetNetwork(
+                    placeholder: 'lib/assets/grey_placeholder.png',
                     image: photos[index].photoUrl)
             ),
             Container(
@@ -335,7 +355,7 @@ class UserPageState extends State<UserPage>{
             splashColor: Colors.blueAccent,
             onPressed: (){
               user.name = '';
-              Navigator.pushReplacementNamed(
+              Navigator.popAndPushNamed(
                   context, "/login");
             },
             child: Text(
@@ -380,7 +400,7 @@ class LoginPage extends StatelessWidget {
   Widget build(BuildContext context){
     return FlutterLogin(
       title: 'Streaming App',
-      logo: 'https://via.placeholder.com/150x150?text=Streaming+App',
+      logo: 'lib/assets/grey_placeholder.png',
       onLogin: _authUser,
       onSignup: _authUser,
       onSubmitAnimationCompleted: (){
@@ -391,14 +411,170 @@ class LoginPage extends StatelessWidget {
   }
 }
 
+class SearchPageRoute extends CupertinoPageRoute {
+  SearchPageRoute(photos)
+      : super(builder: (BuildContext context) => new SearchPage(photos: photos));
+}
+
 class SearchPage extends StatefulWidget{
+  final List<Photo> photos;
+
+  SearchPage({Key key, @required this.photos}) : super(key: key);
+
   @override
-  SearchPageState createState() => SearchPageState();
+  SearchPageState createState() => SearchPageState(photos);
 }
 
 class SearchPageState extends State{
+  List<Photo> photos;
+  var items = List<Photo>();
+
+  var _selectedIndex = 1;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+      String route = '/homepage';
+      if(_selectedIndex == 0) Navigator.pop(context);
+    });
+
+  }
+
   @override
-  Widget build(BuildContext context){
-    return null;
+  void initState(){
+    items.addAll(photos);
+    super.initState();
+  }
+
+  @override
+  SearchPageState(this.photos);
+
+  TextEditingController _searchQueryController = TextEditingController();
+  bool _isSearching = false;
+  String searchQuery = "Search query";
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: _buildSearchField(),
+        actions: _buildActions(),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: (){
+            Navigator.of(context).popAndPushNamed('/homepage');
+          },
+        ),
+      ),
+      body: PhotosList(photos: items),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            title: Text('Home'),
+          ),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.search),
+              title: Text('Search')
+          )
+        ],
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+      ),
+    );
+  }
+
+  Widget _buildSearchField(){
+    return TextField(
+      controller: _searchQueryController,
+      autofocus: true,
+      decoration: InputDecoration(
+        hintText: "Search contents...",
+        border: InputBorder.none,
+        hintStyle: TextStyle(color: Colors.white30),
+      ),
+      style: TextStyle(color: Colors.white, fontSize: 20.0),
+      onChanged: (query) => updateSearchQuery(query),
+    );
+  }
+
+  List<Widget> _buildActions(){
+    if(_isSearching) {
+      return <Widget>[
+        IconButton(
+          icon: const Icon(Icons.clear),
+          onPressed: () {
+            if(_searchQueryController == null ||
+            _searchQueryController.text.isEmpty) {
+              Navigator.pop(context);
+              return;
+            }
+            _clearSearchQuery();
+          },
+        )
+      ];
+    }
+
+    return <Widget>[
+      IconButton(
+        icon: const Icon(Icons.search),
+        onPressed: _startSearch,
+      )
+    ];
+  }
+
+  void _startSearch() {
+    ModalRoute.of(context).addLocalHistoryEntry(LocalHistoryEntry(onRemove: _stopSearching));
+
+    setState(() {
+      _isSearching = true;
+    });
+  }
+
+  void updateSearchQuery(String newQuery){
+    setState(() {
+      searchQuery = newQuery;
+      searchQuery.isNotEmpty ? _isSearching = true : _isSearching = false;
+      filterSearchQuery(newQuery);
+    });
+  }
+
+  void filterSearchQuery(String newQuery){
+    List<Photo> tmp = List<Photo>();
+    tmp.addAll(photos);
+    if(newQuery.isNotEmpty){
+      List<Photo> tmpData = List<Photo>();
+      tmp.forEach((item){
+        if(item.title.startsWith(newQuery)){
+          tmpData.add(item);
+        }
+      });
+      setState(() {
+        items.clear();
+        items.addAll(tmpData);
+      });
+      return;
+    } else {
+      setState(() {
+        items.clear();
+        items.addAll(tmp);
+      });
+    }
+  }
+
+  void _stopSearching(){
+    _clearSearchQuery();
+    setState(() {
+      _isSearching = false;
+    });
+  }
+
+  void _clearSearchQuery(){
+    setState(() {
+      _searchQueryController.clear();
+      updateSearchQuery("");
+    });
   }
 }
+
+
