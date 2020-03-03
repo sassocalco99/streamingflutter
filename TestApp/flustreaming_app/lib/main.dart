@@ -10,13 +10,22 @@ import 'package:flutter_login/flutter_login.dart';
 import 'package:flutter_swiper/flutter_swiper.dart';
 import 'package:giffy_dialog/giffy_dialog.dart';
 import 'package:flappy_search_bar/flappy_search_bar.dart';
+import 'dart:async' show Future;
+import 'package:flutter/services.dart' show rootBundle;
+import 'dart:convert';
 
-// TODO Create databases for users
 // TODO Think about left menu
-// TODO Add asset logo
 // TODO auto-login
 // TODO Internal Player
 
+
+TextStyle _styleofUserPage = TextStyle(
+  color: Colors.white,
+  fontWeight: FontWeight.bold,
+  fontFamily: 'Roboto',
+  fontSize: 25);
+
+double _logosize = 35.0;
 
 class Photo{
   final int contentId;
@@ -35,23 +44,48 @@ class Photo{
   }
 }
 
-const users = const{
-  'test@gmail.com': '1234',
-  'test@email.it': 'test',
-};
-
 User user;
 
 class User{
   String name;
-  IconData userIcon;
+  String email;
+  String password;
+  String city;
+  String tel;
 
-  User({this.name, this.userIcon});
 
-  void userDetails(String name){
-    this.name = name;
-    this.userIcon = Icons.account_circle;
+  User({this.name, this.email, this.password, this.city, this.tel});
+
+  void userDetails(User user){
+    this.name = user.name;
+    this.email = user.email;
+    this.password = user.password;
+    this.city = user.city;
+    this.tel = user.tel;
   }
+
+  factory User.fromJson(Map<String, dynamic> json){
+    return User(
+      name: json['name'] as String,
+      email: json['email'] as String,
+      password: json['username'] as String,
+      city: json['address']['city'] as String,
+      tel: json['phone'] as String,
+    );
+  }
+}
+
+String _usersdb = 'https://jsonplaceholder.typicode.com/users';
+
+Future<List<User>> fetchUsers(http.Client client) async {
+  final response = await client.get(_usersdb);
+
+  return compute(parseUsers, response.body);
+}
+
+List<User> parseUsers(String responseBody) {
+  final parsed =  json.decode(responseBody).cast<Map<String, dynamic>>();
+  return parsed.map<User>((json) => User.fromJson(json)).toList();
 }
 
 void main() => runApp(MyApp());
@@ -65,7 +99,7 @@ class MyApp extends StatelessWidget {
       routes: {
         "/login": (_) => new LoginPage(),
         "/homepage": (_) => new HomePage(),
-        "/search": (_) => new SearchPage(),
+        //"/search": (_) => new SearchPage(),
       },
     );
   }
@@ -115,7 +149,7 @@ class HomePageState extends State<HomePage>{
             },
           ),
           centerTitle: true,
-          title: Text('The Streaming App', style: TextStyle(fontSize: 28)),
+          title: Text('Streaming App', style: TextStyle(fontSize: 30)),
           actions: <Widget>[IconButton(
             icon: Icon(Icons.account_circle),
             onPressed: () {
@@ -187,6 +221,8 @@ class PhotosList extends StatelessWidget {
                 padding: EdgeInsets.all(10),
                 alignment: Alignment.center,
                 child: FadeInImage.assetNetwork(
+                    fadeInCurve: Curves.decelerate,
+                    fadeInDuration: const Duration(seconds: 1),
                     placeholder: 'lib/assets/grey_placeholder.png',
                     image: photos[index].photoUrl)
             ),
@@ -213,11 +249,7 @@ class PhotosList extends StatelessWidget {
                 child: Text(
                   photos[index].title.substring(0,10),
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Roboto',
-                      fontSize: 25
-                  ),
+                  style: _styleofUserPage,
                 )
             ),
             Container(
@@ -272,7 +304,7 @@ class UserPageState extends State<UserPage>{
         padding: EdgeInsets.all(8),
         children: <Widget>[
           Icon(
-              user.userIcon,
+              Icons.account_circle,
               color: Colors.blue,
               size: 100
           ),
@@ -284,14 +316,19 @@ class UserPageState extends State<UserPage>{
                   color: Colors.blue,
                   borderRadius: BorderRadius.circular(50)
               ),
-              child: Center(child: Text(user.name,
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Roboto',
-                      fontSize: 25
-
-                  )))
+              child: Stack(
+                children: <Widget>[
+                  Icon(
+                    Icons.person,
+                    color: Colors.white,
+                    size: _logosize,
+                  ),
+                  Center(
+                      child: Text(user.name,
+                        style: _styleofUserPage
+                  ))
+                ],
+              )
           ),
           Container(height: 25),
           Container(
@@ -301,14 +338,19 @@ class UserPageState extends State<UserPage>{
                   color: Colors.blue,
                   borderRadius: BorderRadius.circular(50)
               ),
-              child: Center(child: Text('lorem ipsum',
-                  style: TextStyle(
+              child: Stack(
+                children: <Widget>[
+                  Icon(
+                      Icons.mail,
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Roboto',
-                      fontSize: 25
-
-                  )))
+                      size: _logosize,
+                  ),
+                  Center(
+                      child: Text(user.email,
+                        style: _styleofUserPage,
+                  ))
+                ],
+              )
           ),
           Container(height: 25),
           Container(
@@ -318,14 +360,19 @@ class UserPageState extends State<UserPage>{
                   color: Colors.blue,
                   borderRadius: BorderRadius.circular(50)
               ),
-              child: Center(child: Text('lorem ipsum',
-                  style: TextStyle(
+              child: Stack(
+                children: <Widget>[
+                  Icon(
+                      Icons.phone,
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Roboto',
-                      fontSize: 25
-
-                  )))
+                      size: _logosize,
+                  ),
+                  Center(
+                      child: Text(user.tel,
+                          style: _styleofUserPage
+                  ))
+                ],
+              )
           ),
           Container(height: 25),
           Container(
@@ -335,14 +382,19 @@ class UserPageState extends State<UserPage>{
                   color: Colors.blue,
                   borderRadius: BorderRadius.circular(50)
               ),
-              child: Center(child: Text('lorem ipsum',
-                  style: TextStyle(
+              child: Stack(
+                children: <Widget>[
+                  Icon(
+                      Icons.location_city,
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Roboto',
-                      fontSize: 25
-
-                  )))
+                      size: _logosize,
+                  ),
+                  Center(
+                      child: Text(user.city,
+                          style: _styleofUserPage
+                  ))
+                ],
+              )
           ),
           Container(height: 50),
           FlatButton(
@@ -354,7 +406,7 @@ class UserPageState extends State<UserPage>{
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
             splashColor: Colors.blueAccent,
             onPressed: (){
-              user.name = '';
+              user = null;
               Navigator.popAndPushNamed(
                   context, "/login");
             },
@@ -370,26 +422,44 @@ class UserPageState extends State<UserPage>{
 }
 
 class LoginPage extends StatelessWidget {
+
+  List<User> users =  new List<User>();
+
+  Future<void> matchUsers() async{
+    List<User> tmp = await fetchUsers(http.Client());
+    users.addAll(tmp);
+  }
+
+  int containsEmail(List<User> list, String email){
+    for(int i = 0; i<list.length; i++){
+      if(list[i].email == email) return i;
+    }
+    return -1;
+  }
+
+
   Duration get loginTime => Duration(milliseconds: 2250);
 
   Future<String> _authUser(LoginData data){
-    print('Name: ${data.name}, Password: ${data.password}');
+
+    print('Email: ${data.name}, Password: ${data.password}');
     return Future.delayed(loginTime).then((_) {
-      if(!users.containsKey(data.name)){
+      int userIndex = containsEmail(users, data.name);
+      if(userIndex < 0){
         return 'Username not exists';
       }
-      if(users[data.name] != data.password){
+      if(users[userIndex].password != data.password){
         return 'Password does not match';
       }
       user = new User();
-      user.userDetails(data.name);
+      user.userDetails(users[userIndex]);
       return null;
     });
   }
   Future<String> _recoverPassword(String name){
     print('Name: $name');
     return Future.delayed(loginTime).then((_){
-      if(!users.containsKey(name)){
+      if(containsEmail(users, name) < 0){
         return 'Username not exists';
       }
       return null;
@@ -398,9 +468,11 @@ class LoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context){
+
+    matchUsers();
     return FlutterLogin(
       title: 'Streaming App',
-      logo: 'lib/assets/grey_placeholder.png',
+      logo: 'lib/assets/logo200.png',
       onLogin: _authUser,
       onSignup: _authUser,
       onSubmitAnimationCompleted: (){
@@ -462,7 +534,7 @@ class SearchPageState extends State{
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: (){
-            Navigator.of(context).popAndPushNamed('/homepage');
+            Navigator.pop(context);
           },
         ),
       ),
