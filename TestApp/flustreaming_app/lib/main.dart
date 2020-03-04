@@ -13,6 +13,7 @@ import 'package:flappy_search_bar/flappy_search_bar.dart';
 import 'dart:async' show Future;
 import 'package:flutter/services.dart' show rootBundle;
 import 'dart:convert';
+import 'pages/menu.dart';
 
 // TODO Think about left menu
 // TODO auto-login
@@ -37,7 +38,7 @@ class Photo{
 
   factory Photo.fromJson(Map<String, dynamic> json){
     return Photo(
-      contentId: json['userId'] as int,
+      contentId: json['id'] as int,
       title: json['title'] as String,
       photoUrl: json['thumbnailUrl'] as String,
     );
@@ -95,17 +96,18 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Streaming App',
-      home: LoginPage(),
+      home: new LoginPage(),
       routes: {
         "/login": (_) => new LoginPage(),
         "/homepage": (_) => new HomePage(),
-        //"/search": (_) => new SearchPage(),
+        "/menu": (_) => new MenuPage(),
       },
     );
   }
 }
 
 class HomePage extends StatefulWidget {
+
   @override
   HomePageState createState() => HomePageState();
 }
@@ -145,7 +147,7 @@ class HomePageState extends State<HomePage>{
           leading: IconButton(
             icon: Icon(Icons.menu),
             onPressed: (){
-
+              Navigator.of(context).push(MenuRoute());
             },
           ),
           centerTitle: true,
@@ -421,6 +423,7 @@ class UserPageState extends State<UserPage>{
   }
 }
 
+
 class LoginPage extends StatelessWidget {
 
   List<User> users =  new List<User>();
@@ -444,6 +447,8 @@ class LoginPage extends StatelessWidget {
 
     print('Email: ${data.name}, Password: ${data.password}');
     return Future.delayed(loginTime).then((_) {
+
+
       int userIndex = containsEmail(users, data.name);
       if(userIndex < 0){
         return 'Username not exists';
@@ -453,7 +458,10 @@ class LoginPage extends StatelessWidget {
       }
       user = new User();
       user.userDetails(users[userIndex]);
+
+
       return null;
+
     });
   }
   Future<String> _recoverPassword(String name){
@@ -465,6 +473,7 @@ class LoginPage extends StatelessWidget {
       return null;
     });
   }
+
 
   @override
   Widget build(BuildContext context){

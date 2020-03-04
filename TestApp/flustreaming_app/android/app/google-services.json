@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "353761641637",
+    "firebase_url": "https://flustreaming.firebaseio.com",
+    "project_id": "flustreaming",
+    "storage_bucket": "flustreaming.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:353761641637:android:2d078d0d91e79951d0394c",
+        "android_client_info": {
+          "package_name": "com.example.flustreamingapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "353761641637-slvd1prdebo0tcrf24kp9lstk5vprmt9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDopPHCGvIWVUo6pr4yeeGZUn0EbPtvwog"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "353761641637-slvd1prdebo0tcrf24kp9lstk5vprmt9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
