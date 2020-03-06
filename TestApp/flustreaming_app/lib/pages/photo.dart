@@ -6,6 +6,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
+String _photodb = 'https://jsonplaceholder.typicode.com/photos';
+
 TextStyle _styleofHomePage = TextStyle(
     color: Colors.white,
     fontWeight: FontWeight.bold,
@@ -35,7 +37,7 @@ List<Photo> parsePhotos(String responseBody){
 }
 
 Future<List<Photo>> fetchPhotos(http.Client client) async {
-  final response = await client.get('https://jsonplaceholder.typicode.com/photos');
+  final response = await client.get(_photodb);
 
   return compute(parsePhotos, response.body);
 }

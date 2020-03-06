@@ -4,6 +4,10 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
+
+String _usersdb = 'https://jsonplaceholder.typicode.com/users';
+
+
 TextStyle _styleofUserPage = TextStyle(
     color: Colors.white,
     fontWeight: FontWeight.bold,
@@ -44,7 +48,6 @@ class User{
   }
 }
 
-String _usersdb = 'https://jsonplaceholder.typicode.com/users';
 
 Future<List<User>> fetchUsers(http.Client client) async {
   final response = await client.get(_usersdb);
